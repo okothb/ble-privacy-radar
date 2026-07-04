@@ -1,0 +1,40 @@
+{
+  "short_name": "PrivacyRadar",
+  "name": "BLE Privacy Radar & Anomaly Engine",
+  "description": "Counter-surveillance motion-correlated tracking anomaly engine for BLE emissions.",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0d1117",
+  "theme_color": "#ff3333",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": [
+    "utilities",
+    "security"
+  ],
+  "permissions": [
+    "geolocation"
+  ],
+  "shortcuts": [
+    {
+      "name": "Start Scan",
+      "short_name": "Scan",
+      "description": "Launch straight into the active BLE signal tracking loop.",
+      "url": "/?action=autoscan",
+      "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

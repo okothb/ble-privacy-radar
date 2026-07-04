@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tactical Dark Cyber-Interface Layout */
+body {
+  margin: 0;
+  background-color: #03060d;
+  color: #e2e8f0;
+  font-family: 'Share Tech Mono', ui-monospace, monospace;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(13, 148, 136, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.03) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(56, 189, 248, 0.04) 0px, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Custom Tactical Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #03060d;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0f766e;
+}
+
+/* Glassmorphism Cards */
+.cyber-card {
+  background: rgba(8, 13, 28, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(56, 189, 248, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cyber-card:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(13, 148, 136, 0.08);
+}
+
+/* Cyber Glow Buttons */
+.cyber-btn-teal {
+  position: relative;
+  background: rgba(13, 148, 136, 0.1);
+  border: 1px solid rgba(13, 148, 136, 0.4);
+  color: #2dd4bf;
+  text-shadow: 0 0 4px rgba(13, 148, 136, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.cyber-btn-teal:hover:not(:disabled) {
+  background: rgba(13, 148, 136, 0.25);
+  border-color: #2dd4bf;
+  box-shadow: 0 0 12px rgba(13, 148, 136, 0.3);
+  transform: translateY(-1px);
+}
+
+.cyber-btn-teal:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cyber-btn-red {
+  position: relative;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #f87171;
+  text-shadow: 0 0 4px rgba(239, 68, 68, 0.5);
+  transition: all 0.2s ease-in-out;
+}
+
+.cyber-btn-red:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Alarm Pulse Animations */
+@keyframes alertPulse {
+  0% {
+    background-color: rgba(220, 38, 38, 0.06);
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.0) inset;
+  }
+  50% {
+    background-color: rgba(220, 38, 38, 0.15);
+    border-color: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15) inset, 0 0 20px rgba(239, 68, 68, 0.1);
+  }
+  100% {
+    background-color: rgba(220, 38, 38, 0.06);
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.0) inset;
+  }
+}
+
+.animate-alert-pulse {
+  animation: alertPulse 1.2s infinite ease-in-out;
+}
+
+/* Scan line sweep background effect */
+@keyframes scanningLine {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.scan-overlay {
+  position: relative;
+  overflow: hidden;
+}
+
+.scan-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 2;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
