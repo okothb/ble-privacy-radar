@@ -3,9 +3,10 @@
  * Streams vehicle or pedestrian movement pace vectors to the tracking loops.
  */
 export class GpsTracker {
-  constructor(onMovementUpdate) {
+  constructor(onMovementUpdate, onError) {
     this.watchId = null;
     this.onMovementUpdate = onMovementUpdate;
+    this.onError = onError;
     this.lastPosition = null;
   }
 
@@ -72,6 +73,7 @@ export class GpsTracker {
       },
       (error) => {
         console.error("GPS hardware access exception caught:", error.message);
+        if (this.onError) this.onError(error);
       },
       {
         enableHighAccuracy: true, // Force raw GPS hardware antenna use instead of cellular mapping

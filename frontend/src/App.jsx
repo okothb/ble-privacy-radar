@@ -11,10 +11,10 @@ import { classifyMacAddress } from './utils/macClassifier';
 const App = () => {
   const [devices, setDevices] = useState({});
   const [alerts, setAlerts] = useState([]);
-  const [gpsActive, setGpsActive] = useState(false);
+  const [gpsActive, setGpsActive] = useState(true); // Default to true to trigger automatically on load
   const [wsConnected, setWsConnected] = useState(false);
   const [whitelist, setWhitelist] = useState(new Set());
-  const [simulatorActive, setSimulatorActive] = useState(false);
+  const [simulatorActive, setSimulatorActive] = useState(true); // Default to true so it functions automatically out of the box
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [currentSpeed, setCurrentSpeed] = useState(0);
 
@@ -24,6 +24,12 @@ const App = () => {
   const socketRef = useRef(null);
   const simIntervalRef = useRef(null);
   const simStepRef = useRef(0);
+  const simulatorActiveRef = useRef(true);
+
+  // Keep simulator active ref in sync to prevent stale closures in hooks
+  useEffect(() => {
+    simulatorActiveRef.current = simulatorActive;
+  }, [simulatorActive]);
 
   // Initialize the intelligence core on application mount
   useEffect(() => {
@@ -32,16 +38,27 @@ const App = () => {
       triggerAudioSiren();
     });
 
-    gpsTrackerRef.current = new GpsTracker((gpsTelemetry) => {
-      if (anomalyEngineRef.current) {
-        anomalyEngineRef.current.updateUserMovement(gpsTelemetry);
-        setCurrentSpeed(gpsTelemetry.speed);
+    gpsTrackerRef.current = new GpsTracker(
+      (gpsTelemetry) => {
+        if (anomalyEngineRef.current) {
+          anomalyEngineRef.current.updateUserMovement(gpsTelemetry);
+          setCurrentSpeed(gpsTelemetry.speed);
+        }
+      },
+      (error) => {
+        setGpsActive(false);
       }
-    });
+    );
+
+    // Automatically start spatial tracking on load
+    const active = gpsTrackerRef.current.startTracking();
+    if (!active) {
+      setGpsActive(false);
+    }
 
     // Background Garbage Collection Sweep Loop
     const GC_INTERVAL = setInterval(() => {
-      if (anomalyEngineRef.current && !simulatorActive) {
+      if (anomalyEngineRef.current && !simulatorActiveRef.current) {
         anomalyEngineRef.current.garbageCollectStaleAssets();
         setDevices({ ...anomalyEngineRef.current.deviceRegistry });
       }
@@ -55,27 +72,36 @@ const App = () => {
     };
   }, []);
 
-  // Manage Real Hardware WebSocket Connection
+  // Manage Real Hardware WebSocket Connection & Reconnection
   useEffect(() => {
-    if (simulatorActive) {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-      }
-      setWsConnected(false);
-      return;
-    }
+    let reconnectTimeout = null;
+    let socket = null;
 
     const connectWebSocket = () => {
-      const socket = new WebSocket('ws://localhost:8765');
+      if (socket) {
+        try {
+          socket.close();
+        } catch (e) {}
+      }
+
+      socket = new WebSocket('ws://localhost:8765');
       socketRef.current = socket;
 
       socket.onopen = () => {
         setWsConnected(true);
+        if (anomalyEngineRef.current) {
+          anomalyEngineRef.current.deviceRegistry = {};
+        }
+        setDevices({});
+        setAlerts([]);
+        setCurrentSpeed(0);
+        setSimulatorActive(false); // Disable simulator when live hardware connects
         console.log('Telemetry link to native RF antenna established.');
       };
 
       socket.onmessage = (event) => {
+        if (simulatorActiveRef.current) return; // Prevent raw packets from mixing with simulation
+
         try {
           const rawPacket = JSON.parse(event.data);
           
@@ -102,14 +128,23 @@ const App = () => {
         }
       };
 
+      socket.onerror = () => {
+        // Handled by onclose
+      };
+
       socket.onclose = () => {
-        setWsConnected(false);
-        console.warn('Telemetry link severed. Reconnecting...');
-        // Retry connection in 5 seconds
-        setTimeout(() => {
-          if (!simulatorActive && !socketRef.current) {
-            connectWebSocket();
+        socketRef.current = null;
+        setWsConnected((prevConnected) => {
+          if (prevConnected) {
+            // Automatically fallback to simulator if a live telemetry link is severed
+            setSimulatorActive(true);
           }
+          return false;
+        });
+
+        console.warn('Telemetry link severed. Reconnecting...');
+        reconnectTimeout = setTimeout(() => {
+          connectWebSocket();
         }, 5000);
       };
     };
@@ -117,12 +152,13 @@ const App = () => {
     connectWebSocket();
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (socket) {
+        socket.close();
       }
+      socketRef.current = null;
     };
-  }, [simulatorActive, whitelist]);
+  }, [whitelist]);
 
   // Manage Simulator Loop State
   useEffect(() => {
@@ -131,13 +167,13 @@ const App = () => {
         clearInterval(simIntervalRef.current);
         simIntervalRef.current = null;
       }
-      // Reset engine states
-      if (anomalyEngineRef.current) {
+      // Reset engine states only if not transitioning to a live WebSocket connection
+      if (!wsConnected && anomalyEngineRef.current) {
         anomalyEngineRef.current.deviceRegistry = {};
         setDevices({});
+        setAlerts([]);
+        setCurrentSpeed(0);
       }
-      setAlerts([]);
-      setCurrentSpeed(0);
       return;
     }
 
@@ -214,6 +250,19 @@ const App = () => {
         });
       }
 
+      // Packet D: An active mobile phone in close proximity (RPA Target)
+      // Emulating a nearby powered-on smartphone emitting active BLE radio signals
+      const phoneMac = '7b:3c:9d:1e:8f:5a';
+      if (!whitelist.has(phoneMac)) {
+        packets.push({
+          address: phoneMac,
+          name: 'iPhone (Active Broadcast)',
+          rssi: -58 + Math.floor(Math.random() * 4), // close proximity signal strength
+          tx_power: -59,
+          manufacturer_ids: [76] // Apple Inc.
+        });
+      }
+
       // Process mock packets
       if (anomalyEngineRef.current) {
         packets.forEach(packet => {
@@ -246,7 +295,7 @@ const App = () => {
         simIntervalRef.current = null;
       }
     };
-  }, [simulatorActive, whitelist]);
+  }, [simulatorActive, whitelist, wsConnected]);
 
   // Audio frequency oscillator configuration
   const triggerAudioSiren = () => {
