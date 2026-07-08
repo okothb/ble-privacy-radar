@@ -65,7 +65,10 @@ async def ws_handler(websocket):
     CONNECTED_CLIENTS.add(websocket)
     try:
         # Keep connection open indefinitely until client window terminates
-        await websocket.wait_for_connection_close()
+        async for message in websocket:
+            pass
+    except websockets.exceptions.ConnectionClosed:
+        pass
     finally:
         logger.info(f"Frontend Web UI pipeline severed: {websocket.remote_address}")
         CONNECTED_CLIENTS.remove(websocket)

@@ -43,3 +43,21 @@ ble-privacy-radar/
 │   │   └── index.css               # Animations & dark-mode styling
 │   └── vite.config.js              # Bundler and local proxy configurations
 └── README.md
+```
+
+---
+
+## 🔍 Troubleshooting & Handset Detection
+
+If the dashboard displays **WebSocket: Linked** but lists **0 devices**, or does not detect your mobile phone, check the following:
+
+### 1. Ensure the Handset is Actively Advertising BLE
+By default, modern smartphones (Android & iOS) do not broadcast BLE advertisement packets constantly to save battery and preserve privacy. To make your device detectable:
+*   **Open Bluetooth Settings:** Simply opening the Bluetooth settings screen on your phone forces the operating system to start emitting temporary advertisements.
+*   **Use a BLE Broadcaster App:** Install a utility like **nRF Connect** or **LightBlue** from the App Store/Google Play Store, go to the "Advertiser" tab, and create and start an active advertiser packet.
+
+### 2. Verify Adapter & External Antennas
+If your PC is a desktop and you do not have its external Wi-Fi/Bluetooth antenna screwed in, the Bluetooth adapter will still work, but its range will be extremely degraded (often less than 10cm). In this case, place your handset directly against the PC case.
+
+### 3. Check Windows Bluetooth Settings
+Verify that Bluetooth is turned **ON** in the Windows Action Center or Windows Settings.
